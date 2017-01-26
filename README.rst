@@ -33,14 +33,52 @@ Requirements
 * Django >= 1.8
 
 
-Example usage
--------------
+Usage
+-----
 
-TODO
+Set some defaults:
+
+    .. code-block:: python
+      # settings.py
+      INTERLINK_LINKS_PER_PAGE = 8
+      INTERLINK_QUERYSETS = 'yourproject.interlink_settings.querysets'
+
+Implement querysets for looking up objects:
+
+    .. code-block:: python
+      # interlink_settings.py
+
+      from interlink import QuerySets
+
+      class SiteQuerySets(QuerySets):
+          def available_objects(self):
+              """
+              All the site's donors: the pages on which to place links.
+              """
+              return [
+                  Page.objects.all().order_by('pk'),
+              ]
+
+          def relevant_objects(self, model):
+              """
+              Relevant pages for a given model.
+              """
+              return [
+                  Page.objects.all().order_by('pk'),
+              ]
+
+
+      querysets = SiteQuerySets()
+
+Django admin integration:
 
     .. code-block:: python
 
-        from interlink import XXX
+      from interlink.admin import KeywordsInline
+
+      class PageAdmin(admin.ModelAdmin):
+        ...
+        inlines = [KeywordsInline, ]
 
 More detailed documentation is available on https://django-interlink.readthedocs.io.
 
