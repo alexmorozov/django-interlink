@@ -125,6 +125,8 @@ class Keyword(models.Model):
 
 @receiver(post_save, sender=Keyword)
 def on_new_keyword(sender, instance, **kwargs):
+    if kwargs.get('raw', False):
+        return
     if kwargs['created']:
         import interlink.tasks
         interlink.tasks.handle_keyword_addition(instance)
@@ -132,6 +134,8 @@ def on_new_keyword(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender=Keyword)
 def on_keyword_delete(sender, instance, **kwargs):
+    if kwargs.get('raw', False):
+        return
     import interlink.tasks
     interlink.tasks.handle_keyword_deletion(instance)
 
@@ -205,14 +209,8 @@ class LinkQuerySet(models.QuerySet):
 
         return len(links)
 
-    def create_for_keyword(self, keyword, exclude=None):
-        """
-        Create interlink(s) for a particular keyword.
-        """
+    def get_donors_for_keyword(self, keyword, exclude=None):
         recipient = keyword.content_object
-        capacity = keyword.weight
-        used = Link.objects.filter(keyword=keyword).count()
-        free_slots = capacity - used
 
         querysets = import_string(settings.INTERLINK_QUERYSETS)
         candidates = querysets.relevant_objects(recipient)
@@ -233,7 +231,18 @@ class LinkQuerySet(models.QuerySet):
                 return False
             return True
 
-        donors = islice(idiverse(candidates, validate=validate), free_slots)
+        return idiverse(candidates, validate=validate)
+
+    def create_for_keyword(self, keyword, exclude=None):
+        """
+        Create interlink(s) for a particular keyword.
+        """
+        capacity = keyword.weight
+        used = Link.objects.filter(keyword=keyword).count()
+        free_slots = capacity - used
+
+        donors = islice(self.get_donors_for_keyword(keyword, exclude),
+                        free_slots)
 
         links = [Link(donor=donor, keyword=keyword, order=used + i)
                  for i, donor in enumerate(donors)]
