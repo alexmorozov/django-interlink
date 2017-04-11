@@ -17,14 +17,15 @@ def interlinks_for(item, slice=None):
     rendered_links = []
     for link in links:
         page = link.keyword.content_object
-        tpl = select_template([
-            'interlink/%s/link.html' % page._meta.app_label,
-            'interlink/%s/%s_link.html' % (page._meta.app_label,
-                                           page._meta.model_name),
-            'interlink/link.html',
-        ])
-        context = template.Context(dict(link=link))
-        rendered_links.append(tpl.render(context))
+        if page:
+            tpl = select_template([
+                'interlink/%s/link.html' % page._meta.app_label,
+                'interlink/%s/%s_link.html' % (page._meta.app_label,
+                                               page._meta.model_name),
+                'interlink/link.html',
+            ])
+            context = template.Context(dict(link=link))
+            rendered_links.append(tpl.render(context))
     if not rendered_links:
         return ''
     return render_to_string('interlink/links_list.html',
