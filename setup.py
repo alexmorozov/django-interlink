@@ -18,7 +18,7 @@ test_requirements = [
 
 setup(
     name='interlink',
-    version='0.0.4',
+    version='0.0.5',
     description=('Boost website\'s SEO and UX by creating internal links '
                  'in Django.'),
     long_description=readme + '\n\n',
